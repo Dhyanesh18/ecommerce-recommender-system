@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+scikit-learn
+torch
+faiss-cpu
+psycopg2-binary
+redis
