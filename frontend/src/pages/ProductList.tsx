@@ -239,7 +239,7 @@ export default function ProductList() {
                                     </h3>
                                     <div className="flex items-center justify-between mt-4">
                                         <span className="text-2xl font-bold text-gray-900">
-                                            ${Number(product.price).toFixed(2)}
+                                            ₹{Number(product.price).toFixed(2)}
                                         </span>
                                         {user && product.stock > 0 && (
                                             <button

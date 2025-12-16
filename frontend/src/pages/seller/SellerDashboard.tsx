@@ -462,7 +462,7 @@ export default function SellerDashboard() {
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="flex-1 bg-linear-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 bg-linear-to-r from-[#003b72] to-[#012b55] text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isSubmitting ? 'Creating...' : 'Create Product'}
                                 </button>
