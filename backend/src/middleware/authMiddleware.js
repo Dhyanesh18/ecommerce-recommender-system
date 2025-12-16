@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-development';
 
 export const authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization;

@@ -1,19 +1,25 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "E-commerce Backend with Event Tracking",
+  "main": "src/server.js",
   "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.16.3",
     "redis": "^5.10.0"

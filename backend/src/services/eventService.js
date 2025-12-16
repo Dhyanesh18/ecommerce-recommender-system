@@ -1,5 +1,5 @@
 import { pool } from '../db/postgres.js';
-import { redis } from '../redis.js';
+import { redis } from '../db/redis.js';
 
 const EVENT_WEIGHTS = {
     view: 'views',
