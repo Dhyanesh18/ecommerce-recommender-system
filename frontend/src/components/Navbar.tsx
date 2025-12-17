@@ -1,19 +1,36 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useCartStore } from '../store/useCartStore';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Navbar() {
     const { user, logout } = useAuthStore();
     const { itemCount } = useCartStore();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Sync search query with URL params
+    useEffect(() => {
+        const query = searchParams.get('search') || '';
+        setSearchQuery(query);
+    }, [searchParams]);
 
     const handleLogout = () => {
         logout();
         navigate('/login');
         setShowUserMenu(false);
+    };
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+        } else {
+            navigate('/products');
+        }
     };
 
     const isSeller = user?.role === 'seller';
@@ -38,7 +55,25 @@ export default function Navbar() {
                         >
                             Products
                         </Link>
-                        <input className="bg-white rounded-lg py-1.5 pr-34 pl-4 " type='search' placeholder='What are you looking for?'></input>
+                        
+                        {/* Search Bar */}
+                        <form onSubmit={handleSearch} className="relative">
+                            <input 
+                                type="search" 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="What are you looking for?"
+                                className="bg-white rounded-lg py-1.5 pr-10 pl-4 w-64 focus:outline-none focus:ring-2 focus:ring-[#C5A358] text-gray-900"
+                            />
+                            <button 
+                                type="submit"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#C5A358] transition-colors"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </button>
+                        </form>
                         {user && !isSeller && (
                             <Link 
                                 to="/cart" 
@@ -152,6 +187,27 @@ export default function Navbar() {
                 {/* Mobile Menu */}
                 {mobileMenuOpen && (
                     <div className="md:hidden border-t border-gray-200 py-4 space-y-3">
+                        {/* Mobile Search */}
+                        <form onSubmit={handleSearch} className="px-4">
+                            <div className="relative">
+                                <input 
+                                    type="search" 
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search products..."
+                                    className="w-full bg-gray-100 rounded-lg py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                                />
+                                <button 
+                                    type="submit"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </form>
+                        
                         <Link 
                             to="/products" 
                             className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"

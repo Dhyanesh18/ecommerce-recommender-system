@@ -158,3 +158,34 @@ CREATE TRIGGER update_cart_items_updated_at BEFORE UPDATE ON cart_items
 
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Wallets table
+CREATE TABLE IF NOT EXISTS wallets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    balance DECIMAL(12, 2) NOT NULL DEFAULT 1000000.00 CHECK (balance >= 0),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_wallets_user ON wallets(user_id);
+
+-- Wallet transactions table
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+    id SERIAL PRIMARY KEY,
+    wallet_id INTEGER NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
+    order_id INTEGER REFERENCES orders(id) ON DELETE SET NULL,
+    transaction_type VARCHAR(50) NOT NULL CHECK (transaction_type IN ('credit', 'debit', 'refund')),
+    amount DECIMAL(12, 2) NOT NULL CHECK (amount > 0),
+    balance_after DECIMAL(12, 2) NOT NULL,
+    description TEXT,
+    metadata JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_wallet_transactions_wallet ON wallet_transactions(wallet_id);
+CREATE INDEX idx_wallet_transactions_order ON wallet_transactions(order_id);
+CREATE INDEX idx_wallet_transactions_created ON wallet_transactions(created_at DESC);
+
+CREATE TRIGGER update_wallets_updated_at BEFORE UPDATE ON wallets
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

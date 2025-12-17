@@ -1,13 +1,27 @@
 import { pool } from '../db/postgres.js';
 
+export async function getCategories(req, res) {
+    try {
+        const result = await pool.query(
+            `SELECT DISTINCT category FROM products ORDER BY category`
+        );
+        
+        const categories = result.rows.map(row => row.category);
+        res.json({ categories });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Failed to fetch categories' });
+    }
+}
+
 export async function getProducts(req, res) {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
+    const category = req.query.category;
 
     try {
-        const result = await pool.query(
-        `
+        let query = `
         SELECT 
             p.id,
             p.name,
@@ -22,12 +36,22 @@ export async function getProducts(req, res) {
             ) AS images
         FROM products p
         LEFT JOIN product_images pi ON p.id = pi.product_id
+        `;
+        
+        const params = [limit, offset];
+        
+        if (category && category !== 'all') {
+            query += ` WHERE p.category = $3`;
+            params.push(category);
+        }
+        
+        query += `
         GROUP BY p.id
         ORDER BY p.created_at DESC
         LIMIT $1 OFFSET $2
-        `,
-        [limit, offset]
-        );
+        `;
+        
+        const result = await pool.query(query, params);
 
         // Debug: Log first product to check images structure
         if (result.rows.length > 0) {

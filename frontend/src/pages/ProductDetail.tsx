@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById, type Product } from '../services/productApi';
 import { useCartStore } from '../store/useCartStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { trackEvent } from '../utils/eventTracker';
 
 export default function ProductDetail() {
     const { id } = useParams<{ id: string }>();
@@ -40,6 +41,14 @@ export default function ProductDetail() {
         
         try {
             await addItem(product.id, quantity);
+            
+            // Track add_to_cart event
+            trackEvent({ 
+                userId: user.id, 
+                productId: product.id, 
+                eventType: 'add_to_cart' 
+            });
+            
             alert('Added to cart!');
         } catch (error) {
             console.error('Failed to add to cart:', error);

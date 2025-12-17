@@ -6,6 +6,8 @@ import eventRoutes from './routes/events.js';
 import productRoutes from './routes/products.js';
 import cartRoutes from './routes/cart.js';
 import uploadRoutes from './routes/upload.js';
+import orderRoutes from './routes/orders.js';
+import walletRoutes from './routes/wallet.js';
 
 dotenv.config();
 const app = express();
@@ -24,6 +26,8 @@ app.use('/events', eventRoutes);
 app.use('/products', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/upload', uploadRoutes);
+app.use('/orders', orderRoutes);
+app.use('/wallet', walletRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

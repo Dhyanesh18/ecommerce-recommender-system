@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Product } from '../services/productApi';
-import { getProducts } from '../services/productApi';
+import { getProducts, getCategories } from '../services/productApi';
 import { trackEvent } from '../utils/eventTracker';
 import { useAuthStore } from '../store/useAuthStore';
 import { useCartStore } from '../store/useCartStore';
@@ -15,18 +15,19 @@ export default function ProductList() {
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [sortBy, setSortBy] = useState<string>('default');
     const [addedToCart, setAddedToCart] = useState<number | null>(null);
+    const [viewedProducts, setViewedProducts] = useState<Set<number>>(new Set());
+    const [categories, setCategories] = useState<string[]>(['all']);
+    const observerRef = useRef<IntersectionObserver | null>(null);
     
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { user } = useAuthStore();
     const { addItem } = useCartStore();
-
-    // Get unique categories from products
-    const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
 
     const loadProducts = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await getProducts(page);
+            const data = await getProducts(page, 20, selectedCategory);
             setProducts(data.results);
             setFilteredProducts(data.results);
         } catch (error) {
@@ -34,11 +35,85 @@ export default function ProductList() {
         } finally {
             setLoading(false);
         }
-    }, [page]);
+    }, [page, selectedCategory]);
 
     useEffect(() => {
         loadProducts();
     }, [loadProducts]);
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const cats = await getCategories();
+                setCategories(['all', ...cats]);
+            } catch (error) {
+                console.error('Failed to load categories:', error);
+            }
+        };
+        loadCategories();
+    }, []);
+
+    // Sync search query with URL params
+    useEffect(() => {
+        const urlSearch = searchParams.get('search');
+        if (urlSearch !== null) {
+            setSearchQuery(urlSearch);
+        }
+    }, [searchParams]);
+
+    // Setup Intersection Observer for view tracking
+    useEffect(() => {
+        if (!user) return;
+
+        observerRef.current = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const productId = parseInt(entry.target.getAttribute('data-product-id') || '0');
+                        if (productId && !viewedProducts.has(productId)) {
+                            // Track view event when product appears in viewport
+                            trackEvent({ userId: user.id, productId, eventType: 'view' });
+                            setViewedProducts(prev => new Set([...prev, productId]));
+                        }
+                    }
+                });
+            },
+            {
+                threshold: 0.5, // Product must be 50% visible
+                rootMargin: '0px'
+            }
+        );
+
+        return () => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
+        };
+    }, [user]);
+
+    // Observe filtered products
+    useEffect(() => {
+        if (!observerRef.current) return;
+
+        // Observe all product cards
+        const productCards = document.querySelectorAll('[data-product-id]');
+        productCards.forEach(card => {
+            observerRef.current?.observe(card);
+        });
+
+        return () => {
+            if (observerRef.current) {
+                productCards.forEach(card => {
+                    observerRef.current?.unobserve(card);
+                });
+            }
+        };
+    }, [filteredProducts]);
+
+    // Reset to page 1 when category changes
+    useEffect(() => {
+        setPage(1);
+    }, [selectedCategory]);
 
     // Filter and sort products
     useEffect(() => {
@@ -52,10 +127,7 @@ export default function ProductList() {
             );
         }
 
-        // Apply category filter
-        if (selectedCategory !== 'all') {
-            result = result.filter(product => product.category === selectedCategory);
-        }
+        // Category filter is now handled by backend, so no need to filter here
 
         // Apply sorting
         switch (sortBy) {
@@ -75,6 +147,7 @@ export default function ProductList() {
 
     const handleProductClick = (product: Product) => {
         if (user) {
+            // Track click event when user clicks to view details
             trackEvent({ userId: user.id, productId: product.id, eventType: 'click' });
         }
         navigate(`/products/${product.id}`);
@@ -199,6 +272,7 @@ export default function ProductList() {
                         {filteredProducts.map((product) => (
                             <div
                                 key={product.id}
+                                data-product-id={product.id}
                                 onClick={() => handleProductClick(product)}
                                 className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1 group"
                             >

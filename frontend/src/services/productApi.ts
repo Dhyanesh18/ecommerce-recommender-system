@@ -26,8 +26,12 @@ export interface CreateProductData {
     images: string[];
 }
 
-export const getProducts = async (page = 1, limit = 20): Promise<ProductsResponse> => {
-    const response = await api.get(`/products?page=${page}&limit=${limit}`);
+export const getProducts = async (page = 1, limit = 20, category?: string): Promise<ProductsResponse> => {
+    let url = `/products?page=${page}&limit=${limit}`;
+    if (category && category !== 'all') {
+        url += `&category=${encodeURIComponent(category)}`;
+    }
+    const response = await api.get(url);
     return response.data;
 };
 
@@ -52,4 +56,9 @@ export const deleteProduct = async (id: number): Promise<void> => {
 export const getSellerProducts = async (): Promise<Product[]> => {
     const response = await api.get('/products/seller/my-products');
     return response.data.products;
+};
+
+export const getCategories = async (): Promise<string[]> => {
+    const response = await api.get('/products/categories');
+    return response.data.categories;
 };

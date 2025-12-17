@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { createProduct, getSellerProducts, type CreateProductData, type Product } from '../../services/productApi';
 import { uploadImage } from '../../services/uploadApi';
+import { getSellerStats } from '../../services/walletApi';
+
+interface SellerStats {
+    totalSales: number;
+    activeOrders: number;
+}
 
 export default function SellerDashboard() {
     const [showAddProduct, setShowAddProduct] = useState(false);
@@ -10,6 +16,8 @@ export default function SellerDashboard() {
     const [success, setSuccess] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+    const [stats, setStats] = useState<SellerStats>({ totalSales: 0, activeOrders: 0 });
+    const [isLoadingStats, setIsLoadingStats] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
     const [formData, setFormData] = useState<CreateProductData>({
@@ -23,6 +31,7 @@ export default function SellerDashboard() {
 
     useEffect(() => {
         loadProducts();
+        loadStats();
     }, []);
 
     const loadProducts = async () => {
@@ -34,6 +43,18 @@ export default function SellerDashboard() {
             console.error('Failed to load products:', err);
         } finally {
             setIsLoadingProducts(false);
+        }
+    };
+
+    const loadStats = async () => {
+        try {
+            setIsLoadingStats(true);
+            const data = await getSellerStats();
+            setStats(data);
+        } catch (err) {
+            console.error('Failed to load seller stats:', err);
+        } finally {
+            setIsLoadingStats(false);
         }
     };
 
@@ -166,7 +187,9 @@ export default function SellerDashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-gray-600 mb-1">Total Sales</p>
-                                <p className="text-3xl font-bold text-gray-900">$0</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {isLoadingStats ? '...' : `₹${stats.totalSales.toLocaleString('en-IN')}`}
+                                </p>
                             </div>
                             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +203,9 @@ export default function SellerDashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-gray-600 mb-1">Active Orders</p>
-                                <p className="text-3xl font-bold text-gray-900">0</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {isLoadingStats ? '...' : stats.activeOrders}
+                                </p>
                             </div>
                             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
